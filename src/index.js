@@ -45,6 +45,25 @@ const posts = [
     }
 ]
 
+const comments = [
+    {
+        id: "1",
+        text: "Nice one!"
+    },
+    {
+        id: "2",
+        text: "Great!"
+    },
+    {
+        id: "3",
+        text: "the Best!"
+    },
+    {
+        id: "2",
+        text: "Marvelous!"
+    }
+]
+
 // Type Def Schema
 const typeDefs = `
     type Query{
@@ -52,7 +71,7 @@ const typeDefs = `
         post: Post!
         me: User!
         posts: [Post!]!
-        
+        comments: [Comment]!
     }
 
     type User {
@@ -69,6 +88,11 @@ const typeDefs = `
         body: String!
         published: Boolean!
         author: User!
+    }
+
+    type Comment{
+        id: ID!
+        text: String!
     }
 `;
 
@@ -95,6 +119,9 @@ const resolvers = {
             if(!args.query){
                 return posts
             }
+       },
+       comments(parent, args, ctx, info){
+           return comments
        }
 
     },
@@ -107,6 +134,7 @@ const resolvers = {
     },
     User: {
         posts(parent, args, ctx, info){
+            // for array relational data
             return posts.filter((post) => {
                 return post.author === parent.id
             })
