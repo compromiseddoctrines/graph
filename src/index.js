@@ -3,7 +3,7 @@ const { ApolloServer } = require('apollo-server');
 import { v4 as uuidv4 } from 'uuid';
 
 //sample user data
-const users = [
+let users = [
     {
         id: '1',
         name: 'Jon Mateo',
@@ -23,7 +23,7 @@ const users = [
     }
 ];
 
-const posts = [
+let posts = [
     {
         id: "1",
         title: "Athena",
@@ -50,7 +50,7 @@ const posts = [
     }
 ]
 
-const comments = [
+let comments = [
     {
         id: "1",
         text: "Nice one!",
@@ -91,6 +91,9 @@ const typeDefs = `
         createUser(data: CreateUserInput): User!
         createPost(data: CreatePostInput): Post!
         createComment(data: CreateCommentInput): Comment!
+        deleteUser(id: ID!): User!
+        deletePost(id: ID!): Post!
+        deleteComment(id: ID!): Comment!
     }
 
     input CreateUserInput {
@@ -234,6 +237,59 @@ const resolvers = {
             comments.push(comment)
 
             return comment
+        },
+        deleteUser(parent, args, ctx, info){
+            //check if user exist
+            const userIndex = users.findIndex((user) => {
+                return user.id === args.id
+            })
+
+            if(userIndex === -1){
+                throw new Error('User Not Found!')
+            }
+
+            const deletedUsers = users.splice(userIndex, 1)
+
+            posts = posts.filter((post) => {
+                const match = post.author === args.id
+
+                // if match is going to be deleted
+                if(match){
+                    comments = comments.filter((comment) => {
+                        return comment.post !== post.id
+                    })
+                }
+
+                return !match
+            })
+
+            comments = comments.filter((comment) => comment.author !== args.id)
+
+            return deletedUsers[0];
+        },
+        deletePost(parent, args, ctx, info){
+            const postIndex = posts.findIndex((post) => post.id === args.id)
+            
+            if(postIndex === -1){
+                throw new Error('Post Not Found!')
+            }
+
+            const deletePosts = posts.splice(postIndex, 1)
+
+            comments = comments.filter((comment) => comment.post !== args.id);
+
+            return deletePosts[0]
+        },
+        deleteComment(parent, args, ctx, info){
+            const commentIndex = comments.findIndex((comment) => comment.id === args.id)
+        
+            if(commentIndex === -1){
+                throw new Error('Comment not Found!')
+            }
+
+            const deleteComments = comments.splice(commentIndex,1)
+
+            return deleteComments[0]
         }
     },
     Post: {
