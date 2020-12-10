@@ -1,4 +1,4 @@
-const { ApolloServer } = require('apollo-server');
+const { ApolloServer, PubSub } = require('apollo-server');
 
 // import graphql tools for schema
 import { importSchema } from 'graphql-import'
@@ -10,14 +10,18 @@ const typeDefs = importSchema('./src/schema.graphql');
 import db from './db';
 import Query from './resolvers/Query';
 import Mutation from './resolvers/Mutation';
+import Subscription from './resolvers/Subscription';
 import User from './resolvers/User';
 import Post from './resolvers/Post';
 import Comment from './resolvers/Comment';
+
+const pubsub = new PubSub();
 
 //resolvers
 const resolvers = {
     Query,
     Mutation,
+    Subscription,
     User,
     Post,
     Comment
@@ -30,7 +34,8 @@ const schemaWithResolvers = makeExecutableSchema({ typeDefs, resolvers })
 const server = new ApolloServer({
   schema: schemaWithResolvers,
   context: {
-    db: db
+    db: db,
+    pubsub
   }
 });
 
