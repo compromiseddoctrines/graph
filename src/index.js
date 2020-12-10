@@ -55,25 +55,25 @@ const comments = [
         id: "1",
         text: "Nice one!",
         author: "1",
-        posts: "1"
+        post: "1"
     },
     {
         id: "2",
         text: "Great!",
         author: "2",
-        posts: "2"
+        post: "2"
     },
     {
         id: "3",
         text: "the Best!",
         author: "3",
-        posts: "3"
+        post: "3"
     },
     {
         id: "2",
         text: "Marvelous!",
         author: "1",
-        posts: "1"
+        post: "1"
     }
 ]
 
@@ -88,9 +88,28 @@ const typeDefs = `
     }
 
     type Mutation {
-        createUser(name: String!, email: String!, age: Int): User!
-        createPost(title: String!, body: String!, published: Boolean!, author: ID!): Post!
-        createComment(text: String!, post: ID!, author: ID!): Comment!
+        createUser(data: CreateUserInput): User!
+        createPost(data: CreatePostInput): Post!
+        createComment(data: CreateCommentInput): Comment!
+    }
+
+    input CreateUserInput {
+        name: String!
+        email: String!
+        age: Int
+    }
+
+    input CreatePostInput{
+        title: String!
+        body: String!
+        published: Boolean!
+        author: ID!
+    }
+
+    input CreateCommentInput{
+        text: String!
+        post: ID!
+        author: ID!
     }
 
     type User {
@@ -115,7 +134,7 @@ const typeDefs = `
         id: ID!
         text: String!
         author: User!
-        posts: [Post!]!
+        post: Post!
     }
 `;
 
@@ -152,7 +171,7 @@ const resolvers = {
         createUser(parent, args, ctx, info){
             // check if user email is taken
             const emailTaken = users.some((user) => {
-                return user.email === args.email
+                return user.email === args.data.email
             })
 
             if(emailTaken){
@@ -161,9 +180,9 @@ const resolvers = {
 
             const user = {
                 id: uuidv4(),
-                name: args.name,
-                email: args.email,
-                age: args.age
+                name: args.data.name,
+                email: args.data.email,
+                age: args.data.age
             }
 
             users.push(user)
@@ -172,7 +191,7 @@ const resolvers = {
         },
         createPost(parent, args, ctx, info){
             // check if user exists
-            const userExists = users.some((user) => user.id === args.author)
+            const userExists = users.some((user) => user.id === args.data.author)
             
             if(!userExists){
                 throw new Error('User not Found!')
@@ -180,10 +199,11 @@ const resolvers = {
 
             const post = {
                 id: uuidv4(),
-                title: args.title,
-                body: args.body,
-                published: args.published,
-                author: args.author
+                title: args.data.title,
+                body: args.data.body,
+                published: args.data.published,
+                author: args.data.author
+                //...args when using spread operator the same as above except for ID
             }
 
             posts.push(post)
@@ -191,9 +211,9 @@ const resolvers = {
             return post
         },
         createComment(parent, args, ctx, info){
-            const userExists = users.some((user) => user.id === args.author)
+            const userExists = users.some((user) => user.id === args.data.author)
             const postExists = posts.some((post) => {
-                return post.id === args.post && post.published 
+                return post.id === args.data.post && post.published 
             });
 
             if(!userExists){
@@ -206,9 +226,9 @@ const resolvers = {
 
             const comment = {
                 id: uuidv4(),
-                text: args.text,
-                author: args.author,
-                post: args.post 
+                text: args.data.text,
+                author: args.data.author,
+                post: args.data.post 
             }
 
             comments.push(comment)
@@ -247,9 +267,9 @@ const resolvers = {
                 return user.id === parent.author
             })
         },
-        posts(parent, arg, ctx, info){
-            return posts.filter((post) => {
-                return post.author === parent.id
+        post(parent, arg, ctx, info){
+            return posts.find((post) => {
+                return post.id === parent.post
             });
         }
     }
